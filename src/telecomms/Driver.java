@@ -4,23 +4,30 @@ public class Driver {
 	public static void main(String[] args){
 
 		int list [] = {1,2,4,6,8,16};
-		for ( int i:list){
+		//for ( int i:list){
 			
 		
-		RAT GSM = new RAT(20,12,"GSM");
-		RAT r1 =new RAT(20,16,"UMTS");
-		RAT r2 =new RAT(20,16,"GSM");
+		RAT GSM = new RAT(16,12,"GSM");
+		RAT UMTS =new RAT(20,16,"UMTS");
+		RAT[] rats = {UMTS,GSM}; 
 		
-		r1.getType().get(0).setBBU("video", i);
-		RAT[] UMTS = {r1,r2}; 
+	//	UMTS.getType().get(0).setBBU("video", i);
 		
+		int cap1 = GSM.getCapacity();
+		int thr1 = GSM.getThreshold();
+		int cap2 = UMTS.getCapacity();
+		int thr2 = UMTS.getThreshold();
+		System.out.println("\n\ncapacity GSM: "+cap1);
+		System.out.println("Threshold GSM:" + thr1);
+		System.out.println("capacity UMTS: "+cap2);
+		System.out.println("Threshold UMTS:" + thr2);
 		
 		Group A = new Group(GSM);
-		Group B = new Group(UMTS);
+		Group B = new Group(rats);
 		
 		
-		System.out.println("\n\n____________________________________________");
-		System.out.println(i);
+		System.out.println("____________________________________________");
+		//System.out.println(i);
 
 		float bp = calcBlockingProb(A,"voice");
 		System.out.println("Blocking probability A voice: "+bp);
@@ -45,7 +52,7 @@ public class Driver {
 		System.out.println("\nDropping probability of group B video:");
 		float dpv = calcDroppingProb(B,"video");
 		System.out.println("Dropping probability: "+dpv);
-		}
+		//}
 	}
 	
 	public static float calcBlockingProb(Group T,String callType){
@@ -90,7 +97,7 @@ public class Driver {
 						for (int l = 0; l<= thr2; l+=bbu2){
 							if (((i+j) <= cap1) && ((k+l) <= cap2) ){
 								possibleStates++;
-								if (((i+j) >= thr1) && ((k+l) >= thr2)){blockingStates++;}
+								if (((i+j+bbu1) > thr1) && ((k+l+bbu2) > thr2)){blockingStates++;}
 							}
 						}
 					}
@@ -101,31 +108,20 @@ public class Driver {
 		}
 		
 		
-//		System.out.println("Admissible states: "+possibleStates);
-//		System.out.println("Blocking States: "+blockingStates);
+		System.out.println("Admissible states: "+possibleStates);
+		System.out.println("Blocking States: "+blockingStates);
 		return blockingStates/possibleStates;
 	}
 	
-	public static float[] handoff_effect(int[]range,Group g, String type){
-		float [] res = new float[range.length]; 
-		int j= 0;
-		for(int i:range){
-			for( RAT r: g.getRats()){
-				r.setThreshold(i);
-			}
-			res[j] = calcBlockingProb(g,"type");
-			j++;
-		}
-		return res;
-	}
+
 	
 	public static float calcDroppingProb(Group T,String callType){
 		RAT[] rat = T.getRats();
 		float possibleStates = 0;
 		float droppingStates =  0;
 		if (rat.length ==1 || 
-				callType.equals("video")){
-
+				callType.equals("video")){ //video and GSM can only access 1 RAT 
+			
 			int cap = rat[0].getCapacity();
 			int thr = rat[0].getThreshold();
 			int bbu = rat[0].getType().get(0).getBBU(callType);
@@ -133,7 +129,7 @@ public class Driver {
 				for (int j = 0; j<= thr;j+= bbu){
 					if (i+j <= cap){
 						possibleStates++;
-						if (i+j >= cap){droppingStates++;}
+						if (i+j+bbu > cap){droppingStates++;}// if it can't take the next call
 					}
 					
 					
@@ -161,7 +157,7 @@ public class Driver {
 						for (int l = 0; l<= thr2; l+=bbu2){
 							if (((i+j) <= cap1) && ((k+l) <= cap2) ){
 								possibleStates++;
-								if (((i+j) >= cap1) && ((k+l) >= cap2)){droppingStates++;}
+								if (((i+j+bbu1) > cap1) && ((k+l+bbu2) > cap2)){droppingStates++;}
 							}
 						}
 					}
@@ -170,8 +166,8 @@ public class Driver {
 			}
 			
 		}
-//		System.out.println("Admissible states: "+possibleStates);
-//		System.out.println("Dropping States "+droppingStates);
+		System.out.println("Admissible states: "+possibleStates);
+		System.out.println("Dropping States "+droppingStates);
 		return droppingStates/possibleStates;
 		
 	}
